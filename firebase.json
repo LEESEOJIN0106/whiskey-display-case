@@ -1,0 +1,11 @@
+{
+  "auth": {
+    "providers": {
+      "emailPassword": false,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "위스키 로그",
+        "supportEmail": "xleeboy002@gmail.com"
+      }
+    }
+  }
+}

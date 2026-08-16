@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/* 눈누 추천: 마루 부리(제목) + 프리텐다드(본문) */
+@font-face {
+  font-family: "MaruBuri";
+  src: url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Light.woff2")
+    format("woff2");
+  font-weight: 300;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Regular.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-SemiBold.woff2")
+    format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MaruBuri";
+  src: url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Bold.woff2")
+    format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Regular.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Medium.woff2")
+    format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-SemiBold.woff2")
+    format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Bold.woff2")
+    format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --bg: #1a120c;
+  --panel: #24180f;
+  --ink: #140e09;
+  --cream: #f3e6d4;
+  --muted: #b6a48c;
+  --amber: #c9893a;
+  --gold: #e0b15a;
+  --line: #3a2a1c;
+  --background: var(--bg);
+  --foreground: var(--cream);
+  --font-display: "MaruBuri", "Apple SD Gothic Neo", serif;
+  --font-body: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(201, 137, 58, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(224, 177, 90, 0.08), transparent 50%),
+    linear-gradient(180deg, #1f150e 0%, var(--bg) 40%, #120d09 100%);
+  color: var(--cream);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+.field {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  padding: 0.625rem 0.75rem;
+  color: var(--cream);
+  outline: none;
+  font-family: var(--font-body);
+}
+
+.field:focus {
+  border-color: var(--amber);
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: rise-in 0.55s ease-out both;
+}
+
+.animate-rise-delay {
+  animation: rise-in 0.7s ease-out 0.12s both;
+}

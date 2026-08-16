@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum WhiskyStatus {
+  UNOPENED
+  OPENED
+  FINISHED
+}
+
+model User {
+  id          String         @id
+  email       String
+  displayName String?
+  photoURL    String?
+  createdAt   DateTime       @default(now())
+  whiskies    Whisky[]
+  notes       TastingNote[]
+}
+
+model Whisky {
+  id               String         @id @default(uuid())
+  userId           String
+  name             String
+  distillery       String
+  abv              Float
+  openedAt         DateTime?
+  status           WhiskyStatus   @default(UNOPENED)
+  remainingPercent Int            @default(100)
+  imageUrl         String?
+  createdAt        DateTime       @default(now())
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes            TastingNote[]
+
+  @@index([userId])
+}
+
+model TastingNote {
+  id        String   @id @default(uuid())
+  whiskyId  String
+  userId    String
+  tastedAt  DateTime
+  rating    Int
+  tags      String   @default("[]")
+  memo      String   @default("")
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  whisky    Whisky   @relation(fields: [whiskyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([whiskyId])
+  @@index([userId])
+}
