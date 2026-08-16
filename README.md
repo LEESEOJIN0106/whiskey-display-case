@@ -1,71 +1,44 @@
 # whiskeylog
 
-위스키 컬렉션을 기록하고, 개봉 후 에어링 상태와 시음 노트를 관리하는 웹 앱입니다.
+위스키 컬렉션을 기록하고, 개봉 후 에어링과 시음의 순간을 남기는 개인 셀러입니다.
 
-Next.js 프론트엔드와 Express API가 함께 동작합니다. 로그인은 Firebase Auth(Google)를 쓰고, 병 데이터는 Prisma + SQLite에 저장합니다.
+Google 계정으로 로그인한 뒤, 가지고 있는 병을 등록하고 상태가 어떻게 바뀌는지 한눈에 볼 수 있습니다.
 
-## 스택
+## 기능
 
-- **Web**: Next.js 16, React 19, Tailwind CSS 4
-- **API**: Express 5, Zod, Prisma 7 (better-sqlite3)
-- **Auth**: Firebase Authentication (Google)
+### 나의 셀러
+등록한 위스키를 카드로 모아 봅니다. 병 사진, 증류소, 도수, 에어링 단계, 잔여량이 한 화면에 정리됩니다. 아직 병이 없으면 첫 위스키를 바로 등록할 수 있습니다.
 
-## 시작하기
+### 위스키 등록 · 수정
+이름, 증류소, 도수, 개봉 상태, 개봉일, 잔여량을 저장합니다.
 
-```bash
-npm install
-npm install --prefix server
-cp .env.example .env.local
-cp server/.env.example server/.env
-```
+- 이름을 입력하면 위스키 이름 후보가 자동으로 뜹니다.
+- 병 사진을 검색해 골라 넣을 수 있습니다.
+- 미개봉 / 개봉 / 시음 완료 상태를 바꿀 수 있고, 개봉하기를 누르면 그날부터 에어링이 시작됩니다.
 
-`.env.local`에 Firebase 웹 설정값을, `server/.env`에 Firebase Admin 자격 증명과 `DATABASE_URL`을 넣습니다.
+### 에어링 추적
+개봉일을 기준으로 며칠이 지났는지 계산하고, 지금 병이 어느 단계인지 표시합니다.
 
-```bash
-npm run db:generate --prefix server
-npm run db:push --prefix server
-npm run dev
-```
-
-- 웹: [http://localhost:3000](http://localhost:3000)
-- API: [http://localhost:4000](http://localhost:4000) (`GET /health`)
-
-## 스크립트
-
-| 명령 | 설명 |
-| --- | --- |
-| `npm run dev` | Next.js와 Express를 함께 실행 |
-| `npm run dev:web` | 웹만 실행 |
-| `npm run dev:api` | API만 실행 |
-| `npm run db:push --prefix server` | SQLite 스키마 반영 |
-| `npm run db:generate --prefix server` | Prisma Client 생성 |
-
-## API
-
-인증이 필요한 요청은 `Authorization: Bearer <Firebase ID token>` 헤더를 붙입니다.
-
-| 메서드 | 경로 | 설명 |
+| 단계 | 기간 | 의미 |
 | --- | --- | --- |
-| `GET` | `/api/whiskies` | 내 컬렉션 목록 |
-| `POST` | `/api/whiskies` | 병 추가 |
-| `GET` | `/api/whiskies/:id` | 상세 + 시음 노트 |
-| `PATCH` | `/api/whiskies/:id` | 병 정보 수정 |
-| `DELETE` | `/api/whiskies/:id` | 병 삭제 |
-| `POST` | `/api/whiskies/:id/notes` | 시음 노트 추가 |
-| `GET` | `/api/suggest/whiskies?q=` | 이름 자동완성 |
-| `GET` | `/api/images/search?q=` | 병 이미지 후보 |
+| Fresh | 개봉 후 14일까지 | 막 열어서 알코올감이 강한 시기 |
+| Initial Airing | 15–60일 | 알코올감이 가라앉는 시기 |
+| Peak Flavor | 61–180일 | 풍미가 가장 안정된 시기 |
+| Fully Aired | 181일 이후 | 산화가 진행되니 주의가 필요한 시기 |
 
-이미지 검색은 Bing과 Wikimedia Commons를 병렬로 조회합니다. 이름 제안은 Google Suggest와 로컬 인기 위스키 시드를 합칩니다.
+미개봉 병은 `미개봉`, 다 마신 병은 `완료`로 표시됩니다.
 
-## 에어링
+### 잔여량
+개봉한 병은 남은 양을 퍼센트로 기록합니다. 셀러 카드와 상세 화면에 바로 보여서, 어느 병을 다음에 열지 고르기 쉽습니다.
 
-개봉일 기준으로 경과 일수를 계산합니다.
+### 테이스팅 노트
+병마다 시음 기록을 남길 수 있습니다.
 
-| 단계 | 기간 |
-| --- | --- |
-| Fresh | 0–14일 |
-| Initial Airing | 15–60일 |
-| Peak Flavor | 61–180일 |
-| Fully Aired | 181일 이후 |
+- 시음일, 1–5점 평점, 짧은 메모
+- 피트, 오크, 스위트, 프루트, 스파이스 같은 향미 태그
+- 공개 / 비공개 여부
 
-미개봉·시음 완료 병은 단계 대신 상태 라벨만 표시합니다.
+노트는 시간순으로 쌓여서, 같은 병이 시간이 지나며 어떻게 달라졌는지 비교할 수 있습니다.
+
+### Google 로그인
+Google 계정으로만 들어옵니다. 각 사용자는 자신의 셀러와 노트만 보고 수정할 수 있습니다.
