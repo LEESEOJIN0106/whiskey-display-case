@@ -15,10 +15,6 @@ const nextConfig: NextConfig = {
     return {
       beforeFiles: [
         {
-          source: "/__/auth/handler",
-          destination: "/api/firebase-auth-handler",
-        },
-        {
           source: "/__/auth/:path*",
           destination: `https://${FIREBASE_AUTH_HOST}/__/auth/:path*`,
         },
