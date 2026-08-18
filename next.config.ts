@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
     return {
       beforeFiles: [
         {
+          source: "/__/auth/handler",
+          destination: "/api/firebase-auth-handler",
+        },
+        {
           source: "/__/auth/:path*",
           destination: `https://${FIREBASE_AUTH_HOST}/__/auth/:path*`,
         },
@@ -26,15 +30,35 @@ const nextConfig: NextConfig = {
     };
   },
   async headers() {
+    const coopAllowPopups = [
+      {
+        key: "Cross-Origin-Opener-Policy",
+        value: "same-origin-allow-popups",
+      },
+    ];
+    const coopUnsafeNone = [
+      {
+        key: "Cross-Origin-Opener-Policy",
+        value: "unsafe-none",
+      },
+    ];
+
     return [
       {
-        source: "/:path*",
-        headers: [
-          {
-            key: "Cross-Origin-Opener-Policy",
-            value: "same-origin-allow-popups",
-          },
-        ],
+        source: "/",
+        headers: coopAllowPopups,
+      },
+      {
+        source: "/:path((?!__/auth|__/firebase).*)",
+        headers: coopAllowPopups,
+      },
+      {
+        source: "/__/auth/:path*",
+        headers: coopUnsafeNone,
+      },
+      {
+        source: "/__/firebase/:path*",
+        headers: coopUnsafeNone,
       },
     ];
   },
