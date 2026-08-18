@@ -3,6 +3,7 @@
 import {
   addDoc,
   collection,
+  collectionGroup,
   deleteDoc,
   doc,
   getDoc,
@@ -123,13 +124,42 @@ async function fetchNotes(whiskyId: string, uid: string) {
   }
 }
 
+/**
+ * One collection-group read for the whole cellar instead of one read per bottle.
+ * Needs the `notes` collection-group index and rule to be deployed; without them
+ * the list simply renders without note summaries.
+ */
+async function fetchNotesByWhisky(uid: string) {
+  const grouped = new Map<string, TastingNote[]>();
+  try {
+    const snapshot = await getDocs(
+      query(collectionGroup(db, "notes"), where("userId", "==", uid))
+    );
+    for (const item of snapshot.docs) {
+      const note = serializeNote(item.id, item.data());
+      const whiskyId = note.whiskyId || item.ref.parent.parent?.id;
+      if (!whiskyId) continue;
+      const list = grouped.get(whiskyId);
+      if (list) list.push(note);
+      else grouped.set(whiskyId, [note]);
+    }
+    for (const list of grouped.values()) {
+      list.sort((a, b) => (a.tastedAt < b.tastedAt ? 1 : -1));
+    }
+  } catch {
+    return new Map<string, TastingNote[]>();
+  }
+  return grouped;
+}
+
 export async function fetchWhiskies() {
   const uid = requireUid();
-  const snapshot = await getDocs(
-    query(collection(db, "whiskies"), where("userId", "==", uid))
-  );
+  const [snapshot, notesByWhisky] = await Promise.all([
+    getDocs(query(collection(db, "whiskies"), where("userId", "==", uid))),
+    fetchNotesByWhisky(uid),
+  ]);
   return snapshot.docs
-    .map((item) => serializeWhisky(item.id, item.data()))
+    .map((item) => serializeWhisky(item.id, item.data(), notesByWhisky.get(item.id)))
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 

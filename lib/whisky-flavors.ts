@@ -8,22 +8,22 @@ export type WhiskyFlavorCategory = {
 export const WHISKY_FLAVOR_CATEGORIES: WhiskyFlavorCategory[] = [
   {
     id: "smoke-peat",
-    label: "Smoke / Peat",
+    label: "스모크 · 피트",
     tags: ["Peat", "Smoke", "Ash", "Medicinal", "Iodine", "Tar"],
   },
   {
     id: "wood-oak",
-    label: "Wood / Oak",
+    label: "오크 · 나무",
     tags: ["Oak", "Cedar", "Sawdust", "Charred Wood", "Barrel"],
   },
   {
     id: "sweet",
-    label: "Sweet",
+    label: "단맛",
     tags: ["Vanilla", "Honey", "Caramel", "Toffee", "Chocolate", "Maple", "Butterscotch"],
   },
   {
     id: "fruit",
-    label: "Fruit",
+    label: "과일",
     tags: [
       "Fruit",
       "Citrus",
@@ -37,17 +37,17 @@ export const WHISKY_FLAVOR_CATEGORIES: WhiskyFlavorCategory[] = [
   },
   {
     id: "spice",
-    label: "Spice",
+    label: "향신료",
     tags: ["Spice", "Cinnamon", "Pepper", "Clove", "Ginger", "Nutmeg"],
   },
   {
     id: "floral",
-    label: "Floral / Herb",
+    label: "꽃 · 허브",
     tags: ["Floral", "Heather", "Grass", "Mint", "Herbal"],
   },
   {
     id: "other",
-    label: "Other",
+    label: "그 외",
     tags: ["Malt", "Nuts", "Coffee", "Leather", "Brine", "Creamy", "Oily"],
   },
 ];

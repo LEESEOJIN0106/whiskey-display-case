@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { GlassWater } from "lucide-react";
 import { BottleLevel } from "./BottleLevel";
 import type { TonightPick } from "@/lib/tonight";
 
@@ -19,24 +18,19 @@ export function TonightPicks({ picks }: TonightPicksProps) {
 
   return (
     <section className="mb-8 rounded-xl border border-[var(--amber)]/35 bg-[var(--panel)]/70 p-5 shadow-[0_12px_40px_rgba(0,0,0,0.2)]">
-      <div className="mb-4 flex items-end justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-[var(--gold)]">
-            Tonight&apos;s Pour
-          </p>
-          <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl text-[var(--cream)]">
-            오늘 마실 병
-          </h2>
-        </div>
-        <GlassWater className="h-5 w-5 text-[var(--amber)]" />
-      </div>
+      <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-[var(--cream)]">
+        오늘 마실 병
+      </h2>
+      <p className="mt-1 text-sm text-[var(--muted)]">
+        개봉일과 남은 양만 보고 골랐습니다.
+      </p>
 
-      <ul className="grid gap-3 md:grid-cols-3">
+      <ul className="mt-4 grid gap-3 md:grid-cols-3">
         {picks.map((pick) => (
           <li key={pick.whisky.id}>
             <Link
               href={`/whisky/${pick.whisky.id}`}
-              className="flex h-full gap-3 rounded-lg border border-[var(--line)] bg-[var(--ink)]/50 p-3 transition hover:border-[var(--amber)]/70"
+              className="flex h-full gap-3 rounded-lg border border-[var(--line)] bg-[var(--ink)]/50 p-3 transition hover:border-[var(--amber)]/70 hover:bg-[var(--ink)]/80"
             >
               <BottleLevel
                 percent={pick.whisky.remainingPercent}
@@ -51,7 +45,9 @@ export function TonightPicks({ picks }: TonightPicksProps) {
                 <p className="mt-1 text-xs font-medium text-[var(--gold)]">
                   {urgencyLabel[pick.urgency]}
                 </p>
-                <p className="mt-1 text-sm text-[var(--muted)]">{pick.reason}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-[var(--muted)]">
+                  {pick.reason}
+                </p>
               </div>
             </Link>
           </li>

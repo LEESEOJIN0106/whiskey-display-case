@@ -58,7 +58,11 @@ export default function LoginPage() {
         </div>
 
         <div className="animate-rise-delay space-y-4 rounded-xl border border-white/15 bg-[#1a120c]/55 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-md">
-          {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+          {error ? (
+            <p role="alert" className="text-sm text-[#f0a99f]">
+              {error}
+            </p>
+          ) : null}
           <button
             type="button"
             disabled={busy}

@@ -9,6 +9,14 @@
 }
 
 @font-face {
+  font-family: "MaruBuri";
+  src: url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-SemiBold.woff2")
+    format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Pretendard";
   src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Regular.woff2")
     format("woff2");
@@ -24,6 +32,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Pretendard";
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-SemiBold.woff2")
+    format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+
 :root {
   --bg: #1a120c;
   --panel: #24180f;
@@ -33,6 +49,9 @@
   --amber: #c9893a;
   --gold: #e0b15a;
   --line: #3a2a1c;
+  --line-soft: #2e2115;
+  --danger: #c96a5e;
+  --danger-dim: #8a4a44;
   --background: var(--bg);
   --foreground: var(--cream);
   --font-display: "MaruBuri", "Apple SD Gothic Neo", serif;
@@ -48,27 +67,131 @@
 
 body {
   background:
-    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(201, 137, 58, 0.18), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(224, 177, 90, 0.08), transparent 50%),
-    linear-gradient(180deg, #1f150e 0%, var(--bg) 40%, #120d09 100%);
+    radial-gradient(
+      ellipse 90% 45% at 22% -8%,
+      rgba(201, 137, 58, 0.11),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #1d140d 0%, var(--bg) 45%, #130d09 100%);
+  background-attachment: fixed;
   color: var(--cream);
   font-family: var(--font-body);
   min-height: 100vh;
 }
 
-.field {
-  width: 100%;
-  border-radius: 0.5rem;
-  border: 1px solid var(--line);
-  background: var(--ink);
-  padding: 0.625rem 0.75rem;
-  color: var(--cream);
-  outline: none;
-  font-family: var(--font-body);
+/* Faint grain so large flat panels don't read as pure digital fill. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-.field:focus {
-  border-color: var(--amber);
+/* Korean text should break on word boundaries, not mid-syllable-block. */
+h1,
+h2,
+h3,
+h4 {
+  word-break: keep-all;
+  text-wrap: pretty;
+}
+
+::selection {
+  background: rgba(201, 137, 58, 0.32);
+  color: var(--cream);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+* {
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b3725;
+  background-clip: content-box;
+}
+
+/* In the components layer so plain Tailwind utilities can still override it. */
+@layer components {
+  .field {
+    width: 100%;
+    min-height: 2.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--line);
+    background: var(--ink);
+    padding: 0.625rem 0.75rem;
+    color: var(--cream);
+    outline: none;
+    font-family: var(--font-body);
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .field::placeholder {
+    color: #7d6e5c;
+  }
+
+  .field:hover:not(:disabled) {
+    border-color: #4b3725;
+  }
+
+  .field:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px rgba(201, 137, 58, 0.16);
+  }
+
+  .field:focus-visible {
+    outline: none;
+  }
+
+  .field:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  select.field {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%23b6a48c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2rem;
+  }
+
+  input[type="search"].field::-webkit-search-cancel-button {
+    appearance: none;
+    height: 0.75rem;
+    width: 0.75rem;
+    cursor: pointer;
+    background: var(--muted);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1 1l10 10M11 1L1 11' stroke='%23000' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
 }
 
 @keyframes rise-in {
@@ -82,10 +205,49 @@ body {
   }
 }
 
+@keyframes sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .animate-rise {
   animation: rise-in 0.55s ease-out both;
 }
 
 .animate-rise-delay {
   animation: rise-in 0.7s ease-out 0.12s both;
+}
+
+.animate-sheet {
+  animation: sheet-up 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade {
+  animation: fade-in 0.18s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

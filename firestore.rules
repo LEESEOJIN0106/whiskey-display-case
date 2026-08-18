@@ -133,6 +133,12 @@ service cloud.firestore {
       }
     }
 
+    // Collection-group reads bypass the nested match above, so the dashboard's
+    // "all my notes in one query" needs its own owner-only read rule.
+    match /{path=**}/notes/{noteId} {
+      allow read: if isOwner(resource.data.userId);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

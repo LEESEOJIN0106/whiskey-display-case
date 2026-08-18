@@ -51,6 +51,34 @@ export function airingTint(days: number, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+/**
+ * Guidance sentence for how long a bottle has been open. Deliberately a full
+ * sentence rather than a stage name — a "Peak" label compresses away the reason.
+ */
+const HINTS: { until: number; hint: string }[] = [
+  { until: 13, hint: "아직 알코올이 앞섭니다. 며칠 두면 향이 풀립니다." },
+  {
+    until: 59,
+    hint: "향이 갈라지기 시작하는 구간입니다. 지금 노트를 남겨 두면 나중에 비교하기 좋습니다.",
+  },
+  { until: 179, hint: "향이 가장 둥글게 느껴질 무렵입니다." },
+  {
+    until: 364,
+    hint: "향이 조금씩 옅어집니다. 남은 양을 어떻게 비울지 정해 두면 좋습니다.",
+  },
+];
+
+const LONG_OPEN_HINT =
+  "1년을 넘겼습니다. 아까워도 이번 달 안에 비우는 편이 낫습니다.";
+
+export function airingHint(days: number): string {
+  const value = Math.max(0, days);
+  for (const entry of HINTS) {
+    if (value <= entry.until) return entry.hint;
+  }
+  return LONG_OPEN_HINT;
+}
+
 export function calendarDaysBetween(
   from: string | Date,
   to: string | Date = new Date()

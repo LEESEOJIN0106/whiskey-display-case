@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { airingColor, airingTint } from "@/lib/airing";
+import { airingColor, airingHint, airingTint } from "@/lib/airing";
 
 type AiringBadgeProps = {
   label: string | null;
@@ -16,7 +16,7 @@ export function AiringBadge({
     return (
       <span
         className={cn(
-          "inline-flex items-center rounded border border-[var(--line)] px-2 py-0.5 text-xs text-[var(--muted)]",
+          "inline-flex shrink-0 items-center rounded border border-[var(--line)] px-2 py-1 text-xs text-[var(--muted)]",
           className
         )}
       >
@@ -30,7 +30,7 @@ export function AiringBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded border px-2 py-1 text-xs font-medium",
+        "inline-flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-xs font-medium tabular-nums",
         className
       )}
       style={{
@@ -38,6 +38,7 @@ export function AiringBadge({
         borderColor: airingTint(airingDays, 0.55),
         backgroundColor: airingTint(airingDays, 0.16),
       }}
+      title={airingHint(airingDays)}
     >
       D+{airingDays}
     </span>
