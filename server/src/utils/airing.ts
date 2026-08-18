@@ -1,24 +1,10 @@
-export type AiringStage =
-  | "Fresh"
-  | "Initial Airing"
-  | "Peak Flavor"
-  | "Fully Aired";
-
 export type AiringInfo = {
   airingDays: number | null;
-  stage: AiringStage | null;
   label: string | null;
 };
 
 function empty(label: string): AiringInfo {
-  return { airingDays: null, stage: null, label };
-}
-
-function stageFor(days: number): AiringStage {
-  if (days <= 14) return "Fresh";
-  if (days <= 60) return "Initial Airing";
-  if (days <= 180) return "Peak Flavor";
-  return "Fully Aired";
+  return { airingDays: null, label };
 }
 
 export function getAiringInfo(
@@ -38,6 +24,5 @@ export function getAiringInfo(
 
   if (airingDays > 365 * 50) return empty("개봉일 확인 필요");
 
-  const stage = stageFor(airingDays);
-  return { airingDays, stage, label: stage };
+  return { airingDays, label: null };
 }

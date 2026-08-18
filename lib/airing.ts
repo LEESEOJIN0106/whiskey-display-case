@@ -1,53 +1,97 @@
-import type { AiringStage } from "./types";
+import type { AiringInfo } from "./types";
 
-export type AiringInfo = {
-  airingDays: number | null;
-  stage: AiringStage | null;
-  label: string | null;
-};
+type RGB = [number, number, number];
+
+const COLOR_STOPS: { days: number; color: RGB }[] = [
+  { days: 0, color: [224, 177, 90] },
+  { days: 45, color: [201, 137, 58] },
+  { days: 120, color: [196, 106, 58] },
+  { days: 240, color: [180, 84, 62] },
+  { days: 400, color: [156, 72, 72] },
+];
+
+function toDate(value: string | Date): Date | null {
+  const date = typeof value === "string" ? new Date(value) : value;
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function lerp(from: number, to: number, t: number) {
+  return from + (to - from) * t;
+}
+
+function airingRgb(days: number): RGB {
+  const value = Math.max(0, days);
+  const first = COLOR_STOPS[0];
+  const last = COLOR_STOPS[COLOR_STOPS.length - 1];
+  if (value <= first.days) return first.color;
+  if (value >= last.days) return last.color;
+
+  for (let i = 1; i < COLOR_STOPS.length; i++) {
+    const prev = COLOR_STOPS[i - 1];
+    const next = COLOR_STOPS[i];
+    if (value > next.days) continue;
+    const t = (value - prev.days) / (next.days - prev.days);
+    return [
+      Math.round(lerp(prev.color[0], next.color[0], t)),
+      Math.round(lerp(prev.color[1], next.color[1], t)),
+      Math.round(lerp(prev.color[2], next.color[2], t)),
+    ];
+  }
+
+  return last.color;
+}
+
+export function airingColor(days: number): string {
+  const [r, g, b] = airingRgb(days);
+  return `rgb(${r} ${g} ${b})`;
+}
+
+export function airingTint(days: number, alpha: number): string {
+  const [r, g, b] = airingRgb(days);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+export function calendarDaysBetween(
+  from: string | Date,
+  to: string | Date = new Date()
+): number | null {
+  const startDate = toDate(from);
+  const endDate = toDate(to);
+  if (!startDate || !endDate) return null;
+
+  const start = Date.UTC(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate()
+  );
+  const end = Date.UTC(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate()
+  );
+  return Math.floor((end - start) / 86_400_000);
+}
 
 export function getAiringInfo(
   openedAt: string | Date | null | undefined,
   status: string
 ): AiringInfo {
   if (status === "UNOPENED" || !openedAt) {
-    return { airingDays: null, stage: null, label: "미개봉" };
+    return { airingDays: null, label: "미개봉" };
   }
 
   if (status === "FINISHED") {
-    return { airingDays: null, stage: null, label: "완료" };
+    return { airingDays: null, label: "완료" };
   }
 
-  const opened = typeof openedAt === "string" ? new Date(openedAt) : openedAt;
-  if (Number.isNaN(opened.getTime())) {
-    return { airingDays: null, stage: null, label: "개봉일 미상" };
+  const airingDays = calendarDaysBetween(openedAt);
+  if (airingDays === null) {
+    return { airingDays: null, label: "개봉일 미상" };
   }
-
-  const today = new Date();
-  const start = Date.UTC(
-    opened.getFullYear(),
-    opened.getMonth(),
-    opened.getDate()
-  );
-  const end = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-  const airingDays = Math.max(0, Math.floor((end - start) / 86_400_000));
 
   if (airingDays > 365 * 50) {
-    return { airingDays: null, stage: null, label: "개봉일 확인 필요" };
+    return { airingDays: null, label: "개봉일 확인 필요" };
   }
 
-  let stage: AiringStage;
-  if (airingDays <= 14) stage = "Fresh";
-  else if (airingDays <= 60) stage = "Initial Airing";
-  else if (airingDays <= 180) stage = "Peak Flavor";
-  else stage = "Fully Aired";
-
-  return { airingDays, stage, label: stage };
+  return { airingDays: Math.max(0, airingDays), label: null };
 }
-
-export const AIRING_STAGE_COPY: Record<AiringStage, string> = {
-  Fresh: "Newly Opened",
-  "Initial Airing": "알코올감이 가라앉는 시기",
-  "Peak Flavor": "풍미가 가장 안정된 시기",
-  "Fully Aired": "산화 진행 주의",
-};

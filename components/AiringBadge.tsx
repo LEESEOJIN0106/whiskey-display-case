@@ -1,28 +1,18 @@
 import { cn } from "@/lib/utils";
-import type { AiringStage } from "@/lib/types";
-import { AIRING_STAGE_COPY } from "@/lib/airing";
-
-const stageStyles: Record<AiringStage, string> = {
-  Fresh: "bg-emerald-900/40 text-emerald-200 border-emerald-700/50",
-  "Initial Airing": "bg-sky-900/40 text-sky-200 border-sky-700/50",
-  "Peak Flavor": "bg-amber-900/50 text-amber-100 border-amber-600/50",
-  "Fully Aired": "bg-rose-950/50 text-rose-200 border-rose-700/50",
-};
+import { airingColor, airingTint } from "@/lib/airing";
 
 type AiringBadgeProps = {
-  stage: AiringStage | null;
   label: string | null;
   airingDays: number | null;
   className?: string;
 };
 
 export function AiringBadge({
-  stage,
   label,
   airingDays,
   className,
 }: AiringBadgeProps) {
-  if (!stage) {
+  if (airingDays === null) {
     return (
       <span
         className={cn(
@@ -35,19 +25,21 @@ export function AiringBadge({
     );
   }
 
+  const color = airingColor(airingDays);
+
   return (
     <span
       className={cn(
-        "inline-flex flex-col gap-0.5 rounded border px-2 py-1 text-xs",
-        stageStyles[stage],
+        "inline-flex items-center rounded border px-2 py-1 text-xs font-medium",
         className
       )}
-      title={AIRING_STAGE_COPY[stage]}
+      style={{
+        color,
+        borderColor: airingTint(airingDays, 0.55),
+        backgroundColor: airingTint(airingDays, 0.16),
+      }}
     >
-      <span className="font-medium">{stage}</span>
-      {airingDays !== null ? (
-        <span className="opacity-80">D+{airingDays}</span>
-      ) : null}
+      D+{airingDays}
     </span>
   );
 }

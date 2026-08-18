@@ -7,10 +7,19 @@ import { ArrowLeft, Pencil, Star, Trash2 } from "lucide-react";
 import { AuthGate } from "@/components/AuthGate";
 import { AppHeader } from "@/components/AppHeader";
 import { AiringBadge } from "@/components/AiringBadge";
+import { BottleLevel } from "@/components/BottleLevel";
+import { FlavorTimeline } from "@/components/FlavorTimeline";
+import { PourActions } from "@/components/PourActions";
 import { WhiskyFormModal } from "@/components/WhiskyFormModal";
 import { NoteFormModal } from "@/components/NoteFormModal";
-import { AIRING_STAGE_COPY } from "@/lib/airing";
-import { createNote, deleteWhisky, fetchWhisky, updateWhisky } from "@/lib/api";
+import { calendarDaysBetween } from "@/lib/airing";
+import {
+  createNote,
+  deleteWhisky,
+  fetchWhisky,
+  recordPour,
+  updateWhisky,
+} from "@/lib/api";
 import type { Whisky } from "@/lib/types";
 
 export default function WhiskyDetailPage() {
@@ -30,6 +39,8 @@ function WhiskyDetailContent() {
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
+  const [pouring, setPouring] = useState(false);
+  const [pourPrompt, setPourPrompt] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,6 +60,25 @@ function WhiskyDetailContent() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function handlePour(percent: number) {
+    if (!whisky || pouring) return;
+    const next = Math.max(0, whisky.remainingPercent - percent);
+    if (next === 0) {
+      if (!window.confirm("잔여량이 0이 됩니다. 시음 완료로 표시할까요?")) return;
+    }
+    setPouring(true);
+    setError(null);
+    try {
+      const updated = await recordPour(whisky.id, percent);
+      setWhisky(updated);
+      setPourPrompt(updated.status === "OPENED");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "한 잔 기록에 실패했습니다.");
+    } finally {
+      setPouring(false);
+    }
+  }
 
   async function handleOpen() {
     if (!whisky) return;
@@ -106,37 +136,71 @@ function WhiskyDetailContent() {
                   <h1 className="font-[family-name:var(--font-display)] text-4xl text-[var(--cream)]">
                     {whisky.name}
                   </h1>
-                  <p className="mt-2 text-[var(--muted)]">
-                    {whisky.distillery} · {whisky.abv}% ABV
-                  </p>
+                  <p className="mt-2 text-[var(--muted)]">{whisky.abv}% ABV</p>
                 </div>
                 <AiringBadge
-                  stage={whisky.stage}
                   label={whisky.label}
                   airingDays={whisky.airingDays}
                 />
               </div>
 
-              {whisky.stage ? (
+              {whisky.airingDays !== null ? (
                 <p className="mt-4 text-sm text-[var(--muted)]">
-                  {AIRING_STAGE_COPY[whisky.stage]}
-                  {whisky.airingDays !== null
-                    ? ` · 개봉 ${whisky.airingDays}일 차`
-                    : ""}
+                  개봉 {whisky.airingDays}일 차
                 </p>
               ) : null}
 
-              {whisky.status === "OPENED" ? (
-                <div className="mt-5">
-                  <div className="mb-1 flex justify-between text-sm text-[var(--muted)]">
-                    <span>잔여량</span>
-                    <span>{whisky.remainingPercent}%</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-[var(--ink)]">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[var(--amber)] to-[var(--gold)]"
-                      style={{ width: `${whisky.remainingPercent}%` }}
-                    />
+              {whisky.status === "OPENED" || whisky.status === "FINISHED" ? (
+                <div className="mt-5 flex items-end gap-4">
+                  <BottleLevel
+                    percent={whisky.remainingPercent}
+                    status={whisky.status}
+                    airingDays={whisky.airingDays}
+                    size="md"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex justify-between text-sm text-[var(--muted)]">
+                      <span>잔여량</span>
+                      <span>
+                        {whisky.status === "FINISHED"
+                          ? "완료"
+                          : `${whisky.remainingPercent}%`}
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-[var(--ink)]">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-[var(--amber)] to-[var(--gold)]"
+                        style={{
+                          width: `${
+                            whisky.status === "FINISHED"
+                              ? 0
+                              : whisky.remainingPercent
+                          }%`,
+                        }}
+                      />
+                    </div>
+                    {whisky.status === "OPENED" ? (
+                      <PourActions
+                        remainingPercent={whisky.remainingPercent}
+                        disabled={pouring}
+                        onPour={(percent) => void handlePour(percent)}
+                      />
+                    ) : null}
+                    {pourPrompt && whisky.status === "OPENED" ? (
+                      <p className="mt-3 text-sm text-[var(--muted)]">
+                        한 잔 기록했습니다.{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPourPrompt(false);
+                            setNoteOpen(true);
+                          }}
+                          className="text-[var(--gold)] underline underline-offset-2 hover:text-[var(--cream)]"
+                        >
+                          오늘 맛도 남겨 둘까요?
+                        </button>
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -177,6 +241,8 @@ function WhiskyDetailContent() {
               </div>
             </section>
 
+            <FlavorTimeline whisky={whisky} />
+
             <section>
               <h2 className="mb-4 font-[family-name:var(--font-display)] text-2xl text-[var(--cream)]">
                 테이스팅 노트
@@ -194,6 +260,9 @@ function WhiskyDetailContent() {
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <time className="text-sm text-[var(--muted)]">
                             {new Date(note.tastedAt).toLocaleDateString("ko-KR")}
+                            {whisky.openedAt
+                              ? ` · D+${Math.max(0, calendarDaysBetween(whisky.openedAt, note.tastedAt) ?? 0)}`
+                              : ""}
                           </time>
                           <span className="inline-flex items-center gap-1 text-[var(--gold)]">
                             <Star className="h-4 w-4 fill-current" />

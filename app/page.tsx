@@ -5,7 +5,9 @@ import { AuthGate } from "@/components/AuthGate";
 import { AppHeader } from "@/components/AppHeader";
 import { WhiskyCard } from "@/components/WhiskyCard";
 import { WhiskyFormModal } from "@/components/WhiskyFormModal";
+import { TonightPicks } from "@/components/TonightPicks";
 import { createWhisky, deleteWhisky, fetchWhiskies } from "@/lib/api";
+import { pickTonight } from "@/lib/tonight";
 import type { Whisky } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -63,6 +65,10 @@ function DashboardContent() {
             개봉 후 에어링 상태와 잔여량을 한눈에 확인하세요.
           </p>
         </div>
+
+        {!loading && !error && whiskies.length > 0 ? (
+          <TonightPicks picks={pickTonight(whiskies)} />
+        ) : null}
 
         {loading ? (
           <p className="text-[var(--muted)]">불러오는 중…</p>

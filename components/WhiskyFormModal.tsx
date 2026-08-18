@@ -14,7 +14,6 @@ type WhiskyFormModalProps = {
   onClose: () => void;
   onSubmit: (payload: {
     name: string;
-    distillery: string;
     abv: number;
     status: WhiskyStatus;
     openedAt: string | null;
@@ -49,7 +48,6 @@ export function WhiskyFormModal({
   const listId = useId();
   const nameWrapRef = useRef<HTMLDivElement>(null);
   const [name, setName] = useState("");
-  const [distillery, setDistillery] = useState("");
   const [abv, setAbv] = useState("40");
   const [status, setStatus] = useState<WhiskyStatus>("UNOPENED");
   const [openedAt, setOpenedAt] = useState("");
@@ -76,7 +74,6 @@ export function WhiskyFormModal({
   useEffect(() => {
     if (!open) return;
     setName(initial?.name ?? "");
-    setDistillery(initial?.distillery ?? "");
     setAbv(String(initial?.abv ?? 40));
     setStatus(initial?.status ?? "UNOPENED");
     setOpenedAt(
@@ -173,8 +170,6 @@ export function WhiskyFormModal({
 
   async function pickSuggestion(item: WhiskyNameSuggestion) {
     setName(item.name);
-    const nextDistillery = distillery.trim() || item.distillery;
-    if (!distillery.trim()) setDistillery(item.distillery);
     setShowNameSuggest(false);
     setActiveIndex(-1);
 
@@ -199,8 +194,8 @@ export function WhiskyFormModal({
     try {
       const parsedAbv = Number(abv);
       const parsedRemaining = Number(remainingPercent);
-      if (!name.trim() || !distillery.trim() || Number.isNaN(parsedAbv)) {
-        throw new Error("이름, 증류소, 도수를 확인해 주세요.");
+      if (!name.trim() || Number.isNaN(parsedAbv)) {
+        throw new Error("이름과 도수를 확인해 주세요.");
       }
 
       const resolvedImage = await resolveImage(name, {
@@ -216,7 +211,6 @@ export function WhiskyFormModal({
 
       await onSubmit({
         name: name.trim(),
-        distillery: distillery.trim(),
         abv: parsedAbv,
         status,
         openedAt: openedIso,
@@ -338,11 +332,11 @@ export function WhiskyFormModal({
                           <span className="block truncate text-sm text-[var(--cream)]">
                             {item.label}
                           </span>
+                          {item.subtitle ? (
                           <span className="block truncate text-xs text-[var(--muted)]">
-                            {isEntity
-                              ? (item.subtitle ?? `${item.distillery} — 증류소`)
-                              : item.distillery}
+                            {item.subtitle}
                           </span>
+                          ) : null}
                         </span>
                       </button>
                     </li>
@@ -352,15 +346,6 @@ export function WhiskyFormModal({
             ) : null}
           </div>
 
-          <Field label="증류소">
-            <input
-              required
-              value={distillery}
-              onChange={(e) => setDistillery(e.target.value)}
-              className="field"
-              placeholder="Lagavulin"
-            />
-          </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="ABV (%)">
               <input

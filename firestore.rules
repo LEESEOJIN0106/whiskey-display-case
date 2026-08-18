@@ -10,7 +10,7 @@ service cloud.firestore {
     // Fields:
     //   - userId: string (required, immutable) - Firebase Auth uid
     //   - name: string (required, 1-200)
-    //   - distillery: string (required, 1-200)
+    //   - distillery: string (required, 0-200)
     //   - abv: number (required, > 0, <= 100)
     //   - openedAt: timestamp | null (required)
     //   - status: string (required, UNOPENED | OPENED | FINISHED)
@@ -73,7 +73,6 @@ service cloud.firestore {
         data.name.size() >= 1 &&
         data.name.size() <= 200 &&
         data.distillery is string &&
-        data.distillery.size() >= 1 &&
         data.distillery.size() <= 200 &&
         data.abv is number &&
         data.abv > 0 &&

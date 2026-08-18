@@ -1,10 +1,9 @@
 export type WhiskyStatus = "UNOPENED" | "OPENED" | "FINISHED";
 
-export type AiringStage =
-  | "Fresh"
-  | "Initial Airing"
-  | "Peak Flavor"
-  | "Fully Aired";
+export type AiringInfo = {
+  airingDays: number | null;
+  label: string | null;
+};
 
 export type Whisky = {
   id: string;
@@ -18,7 +17,6 @@ export type Whisky = {
   imageUrl: string | null;
   createdAt: string;
   airingDays: number | null;
-  stage: AiringStage | null;
   label: string | null;
   notes?: TastingNote[];
 };

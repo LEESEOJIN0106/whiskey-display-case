@@ -112,16 +112,28 @@ export async function fetchWhisky(id: string) {
   if (!snap.exists() || snap.data().userId !== uid) {
     throw new Error("Whisky not found");
   }
-  const notesSnap = await getDocs(collection(db, "whiskies", id, "notes"));
-  const notes = notesSnap.docs
-    .map((item) => serializeNote(item.id, item.data()))
-    .sort((a, b) => (a.tastedAt < b.tastedAt ? 1 : -1));
+
+  let notes: TastingNote[] = [];
+  try {
+    const notesSnap = await getDocs(
+      query(
+        collection(db, "whiskies", id, "notes"),
+        where("userId", "==", uid)
+      )
+    );
+    notes = notesSnap.docs
+      .map((item) => serializeNote(item.id, item.data()))
+      .sort((a, b) => (a.tastedAt < b.tastedAt ? 1 : -1));
+  } catch {
+    notes = [];
+  }
+
   return serializeWhisky(id, snap.data(), notes);
 }
 
 export async function createWhisky(payload: {
   name: string;
-  distillery: string;
+  distillery?: string;
   abv: number;
   openedAt?: string | null;
   status?: "UNOPENED" | "OPENED" | "FINISHED";
@@ -137,7 +149,7 @@ export async function createWhisky(payload: {
   const ref = await addDoc(collection(db, "whiskies"), {
     userId: uid,
     name: payload.name,
-    distillery: payload.distillery,
+    distillery: payload.distillery?.trim() || "",
     abv: payload.abv,
     status,
     openedAt,
@@ -150,10 +162,26 @@ export async function createWhisky(payload: {
 }
 
 export async function deleteWhisky(id: string) {
-  const whisky = await fetchWhisky(id);
-  const notesSnap = await getDocs(collection(db, "whiskies", id, "notes"));
-  await Promise.all(notesSnap.docs.map((item) => deleteDoc(item.ref)));
-  await deleteDoc(doc(db, "whiskies", whisky.id));
+  const uid = requireUid();
+  const whiskyRef = doc(db, "whiskies", id);
+  const snap = await getDoc(whiskyRef);
+  if (!snap.exists() || snap.data().userId !== uid) {
+    throw new Error("Whisky not found");
+  }
+
+  try {
+    const notesSnap = await getDocs(
+      query(
+        collection(db, "whiskies", id, "notes"),
+        where("userId", "==", uid)
+      )
+    );
+    await Promise.all(notesSnap.docs.map((item) => deleteDoc(item.ref)));
+  } catch {
+    // Notes may be missing; still remove the bottle.
+  }
+
+  await deleteDoc(whiskyRef);
   return { ok: true as const };
 }
 
@@ -161,7 +189,7 @@ export async function updateWhisky(
   id: string,
   payload: Partial<{
     name: string;
-    distillery: string;
+    distillery?: string;
     abv: number;
     openedAt: string | null;
     status: "UNOPENED" | "OPENED" | "FINISHED";
@@ -185,7 +213,7 @@ export async function updateWhisky(
   const ref = doc(db, "whiskies", id);
   await updateDoc(ref, {
     name: payload.name ?? existing.name,
-    distillery: payload.distillery ?? existing.distillery,
+    distillery: payload.distillery ?? existing.distillery ?? "",
     abv: payload.abv ?? existing.abv,
     status,
     openedAt,
@@ -193,6 +221,23 @@ export async function updateWhisky(
       payload.remainingPercent ?? existing.remainingPercent
     ),
     imageUrl: payload.imageUrl === undefined ? existing.imageUrl : payload.imageUrl,
+  });
+  const updated = await getDoc(ref);
+  return serializeWhisky(id, updated.data() ?? {}, existing.notes);
+}
+
+export async function recordPour(id: string, percent: number) {
+  const existing = await fetchWhisky(id);
+  if (existing.status !== "OPENED") {
+    throw new Error("개봉한 병만 한 잔을 기록할 수 있습니다.");
+  }
+
+  const next = Math.max(0, Math.min(100, existing.remainingPercent - percent));
+  const status = next === 0 ? "FINISHED" : "OPENED";
+  const ref = doc(db, "whiskies", id);
+  await updateDoc(ref, {
+    remainingPercent: Math.round(next),
+    status,
   });
   const updated = await getDoc(ref);
   return serializeWhisky(id, updated.data() ?? {}, existing.notes);

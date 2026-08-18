@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { trackEvent } from "@/components/GoogleAnalytics";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await signInWithGoogle();
+      trackEvent("login", { method: "Google" });
       router.replace("/");
     } catch (err) {
       setError(
