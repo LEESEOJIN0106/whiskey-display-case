@@ -1,0 +1,141 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: whiskies
+    // Document ID: client-generated uuid
+    // Fields:
+    //   - userId: string (required, immutable) - Firebase Auth uid
+    //   - name: string (required, 1-200)
+    //   - distillery: string (required, 1-200)
+    //   - abv: number (required, > 0, <= 100)
+    //   - openedAt: timestamp | null (required)
+    //   - status: string (required, UNOPENED | OPENED | FINISHED)
+    //   - remainingPercent: number (required, 0-100)
+    //   - imageUrl: string | null (required, http(s) URL when string)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: whiskies/{whiskyId}/notes
+    // Document ID: client-generated uuid
+    // Fields:
+    //   - userId: string (required, immutable)
+    //   - whiskyId: string (required, immutable, must match path)
+    //   - tastedAt: timestamp (required)
+    //   - rating: number (required, 1-5)
+    //   - tags: list<string> (required, <= 20 items, each <= 40 chars)
+    //   - memo: string (required, <= 4000)
+    //   - isPublic: bool (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function isValidOptionalUrl(value) {
+      return value == null ||
+        (value is string &&
+          value.size() <= 2000 &&
+          value.matches('^https?://.+'));
+    }
+
+    function isValidWhisky(data) {
+      return hasOnlyAllowedFields([
+          'userId',
+          'name',
+          'distillery',
+          'abv',
+          'openedAt',
+          'status',
+          'remainingPercent',
+          'imageUrl',
+          'createdAt'
+        ]) &&
+        data.userId is string &&
+        data.userId == request.auth.uid &&
+        data.name is string &&
+        data.name.size() >= 1 &&
+        data.name.size() <= 200 &&
+        data.distillery is string &&
+        data.distillery.size() >= 1 &&
+        data.distillery.size() <= 200 &&
+        data.abv is number &&
+        data.abv > 0 &&
+        data.abv <= 100 &&
+        (data.openedAt == null || data.openedAt is timestamp) &&
+        data.status in ['UNOPENED', 'OPENED', 'FINISHED'] &&
+        data.remainingPercent is number &&
+        data.remainingPercent >= 0 &&
+        data.remainingPercent <= 100 &&
+        isValidOptionalUrl(data.imageUrl) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidNote(data, whiskyId) {
+      return hasOnlyAllowedFields([
+          'userId',
+          'whiskyId',
+          'tastedAt',
+          'rating',
+          'tags',
+          'memo',
+          'isPublic',
+          'createdAt'
+        ]) &&
+        data.userId is string &&
+        data.userId == request.auth.uid &&
+        data.whiskyId is string &&
+        data.whiskyId == whiskyId &&
+        data.tastedAt is timestamp &&
+        data.rating is number &&
+        data.rating >= 1 &&
+        data.rating <= 5 &&
+        data.tags is list &&
+        data.tags.size() <= 20 &&
+        data.memo is string &&
+        data.memo.size() <= 4000 &&
+        data.isPublic is bool &&
+        data.createdAt is timestamp;
+    }
+
+    match /whiskies/{whiskyId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && isValidWhisky(request.resource.data);
+      allow update: if isOwner(resource.data.userId) &&
+        isValidWhisky(request.resource.data) &&
+        areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      allow delete: if isOwner(resource.data.userId);
+
+      match /notes/{noteId} {
+        allow read: if isOwner(resource.data.userId);
+        allow create: if isAuthenticated() &&
+          isOwner(get(/databases/$(database)/documents/whiskies/$(whiskyId)).data.userId) &&
+          isValidNote(request.resource.data, whiskyId);
+        allow update: if isOwner(resource.data.userId) &&
+          isValidNote(request.resource.data, whiskyId) &&
+          areImmutableFieldsUnchanged(['userId', 'whiskyId', 'createdAt']);
+        allow delete: if isOwner(resource.data.userId);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,10 +1,19 @@
 {
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
   "auth": {
     "providers": {
       "emailPassword": false,
       "googleSignIn": {
         "oAuthBrandDisplayName": "위스키 로그",
-        "supportEmail": "xleeboy002@gmail.com"
+        "supportEmail": "xleeboy002@gmail.com",
+        "authorizedRedirectUris": [
+          "https://whiskeylog.vercel.app",
+          "https://whiskey-display-case.firebaseapp.com",
+          "http://localhost"
+        ]
       }
     }
   }
