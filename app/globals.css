@@ -1,35 +1,10 @@
 @import "tailwindcss";
 
-/* 눈누 추천: 마루 부리(제목) + 프리텐다드(본문) */
-@font-face {
-  font-family: "MaruBuri";
-  src: url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Light.woff2")
-    format("woff2");
-  font-weight: 300;
-  font-display: swap;
-}
-
 @font-face {
   font-family: "MaruBuri";
   src: url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Regular.woff2")
     format("woff2");
   font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "MaruBuri";
-  src: url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-SemiBold.woff2")
-    format("woff2");
-  font-weight: 600;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "MaruBuri";
-  src: url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Bold.woff2")
-    format("woff2");
-  font-weight: 700;
   font-display: swap;
 }
 
@@ -46,22 +21,6 @@
   src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Medium.woff2")
     format("woff2");
   font-weight: 500;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Pretendard";
-  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-SemiBold.woff2")
-    format("woff2");
-  font-weight: 600;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Pretendard";
-  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Bold.woff2")
-    format("woff2");
-  font-weight: 700;
   font-display: swap;
 }
 

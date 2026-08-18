@@ -5,6 +5,15 @@ const FIREBASE_AUTH_HOST = "whiskey-display-case.firebaseapp.com";
 const isVercelProduction = process.env.VERCEL_ENV === "production";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  compress: true,
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
+  images: {
+    formats: ["image/avif", "image/webp"],
+    qualities: [70, 75],
+  },
   env: isVercelProduction
     ? {
         NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: PRODUCTION_HOST,
@@ -47,6 +56,15 @@ const nextConfig: NextConfig = {
       {
         source: "/:path((?!__/auth|__/firebase).*)",
         headers: coopAllowPopups,
+      },
+      {
+        source: "/login-cellar.jpg",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
       },
       {
         source: "/__/auth/:path*",

@@ -38,9 +38,6 @@ export const metadata: Metadata = {
       follow: true,
     },
   },
-  alternates: {
-    canonical: "/",
-  },
   icons: {
     icon: "/favicon.ico",
   },
@@ -107,6 +104,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className="h-full">
+      <head>
+        <link rel="preconnect" href="https://hangeul.pstatic.net" />
+        <link
+          rel="preconnect"
+          href="https://cdn.jsdelivr.net"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="min-h-full flex flex-col antialiased">
         <script
           type="application/ld+json"

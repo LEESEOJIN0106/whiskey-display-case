@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { AiringBadge } from "./AiringBadge";
@@ -9,9 +10,14 @@ import type { Whisky } from "@/lib/types";
 type WhiskyCardProps = {
   whisky: Whisky;
   onDelete: (whisky: Whisky) => void;
+  priority?: boolean;
 };
 
-export function WhiskyCard({ whisky, onDelete }: WhiskyCardProps) {
+export const WhiskyCard = memo(function WhiskyCard({
+  whisky,
+  onDelete,
+  priority = false,
+}: WhiskyCardProps) {
   return (
     <div className="group relative overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel)]/80 shadow-[0_12px_40px_rgba(0,0,0,0.25)] transition duration-300 hover:-translate-y-0.5 hover:border-[var(--amber)]/60 hover:bg-[var(--panel)]">
       <Link href={`/whisky/${whisky.id}`} className="block">
@@ -22,6 +28,9 @@ export function WhiskyCard({ whisky, onDelete }: WhiskyCardProps) {
               src={whisky.imageUrl}
               alt={whisky.name}
               referrerPolicy="no-referrer"
+              loading={priority ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={priority ? "high" : "low"}
               className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--panel)] via-transparent to-transparent" />
@@ -79,4 +88,4 @@ export function WhiskyCard({ whisky, onDelete }: WhiskyCardProps) {
       </button>
     </div>
   );
-}
+});

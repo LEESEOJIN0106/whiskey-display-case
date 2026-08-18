@@ -11,6 +11,7 @@ import {
   serverTimestamp,
   updateDoc,
   where,
+  writeBatch,
   type Timestamp,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -96,6 +97,32 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function getOwnedWhisky(id: string) {
+  const uid = requireUid();
+  const ref = doc(db, "whiskies", id);
+  const snap = await getDoc(ref);
+  if (!snap.exists() || snap.data().userId !== uid) {
+    throw new Error("Whisky not found");
+  }
+  return { uid, ref, snap };
+}
+
+async function fetchNotes(whiskyId: string, uid: string) {
+  try {
+    const notesSnap = await getDocs(
+      query(
+        collection(db, "whiskies", whiskyId, "notes"),
+        where("userId", "==", uid)
+      )
+    );
+    return notesSnap.docs
+      .map((item) => serializeNote(item.id, item.data()))
+      .sort((a, b) => (a.tastedAt < b.tastedAt ? 1 : -1));
+  } catch {
+    return [] as TastingNote[];
+  }
+}
+
 export async function fetchWhiskies() {
   const uid = requireUid();
   const snapshot = await getDocs(
@@ -107,27 +134,8 @@ export async function fetchWhiskies() {
 }
 
 export async function fetchWhisky(id: string) {
-  const uid = requireUid();
-  const snap = await getDoc(doc(db, "whiskies", id));
-  if (!snap.exists() || snap.data().userId !== uid) {
-    throw new Error("Whisky not found");
-  }
-
-  let notes: TastingNote[] = [];
-  try {
-    const notesSnap = await getDocs(
-      query(
-        collection(db, "whiskies", id, "notes"),
-        where("userId", "==", uid)
-      )
-    );
-    notes = notesSnap.docs
-      .map((item) => serializeNote(item.id, item.data()))
-      .sort((a, b) => (a.tastedAt < b.tastedAt ? 1 : -1));
-  } catch {
-    notes = [];
-  }
-
+  const { uid, snap } = await getOwnedWhisky(id);
+  const notes = await fetchNotes(id, uid);
   return serializeWhisky(id, snap.data(), notes);
 }
 
@@ -162,12 +170,7 @@ export async function createWhisky(payload: {
 }
 
 export async function deleteWhisky(id: string) {
-  const uid = requireUid();
-  const whiskyRef = doc(db, "whiskies", id);
-  const snap = await getDoc(whiskyRef);
-  if (!snap.exists() || snap.data().userId !== uid) {
-    throw new Error("Whisky not found");
-  }
+  const { uid, ref } = await getOwnedWhisky(id);
 
   try {
     const notesSnap = await getDocs(
@@ -176,12 +179,14 @@ export async function deleteWhisky(id: string) {
         where("userId", "==", uid)
       )
     );
-    await Promise.all(notesSnap.docs.map((item) => deleteDoc(item.ref)));
+    const batch = writeBatch(db);
+    notesSnap.docs.forEach((item) => batch.delete(item.ref));
+    batch.delete(ref);
+    await batch.commit();
   } catch {
-    // Notes may be missing; still remove the bottle.
+    await deleteDoc(ref);
   }
 
-  await deleteDoc(whiskyRef);
   return { ok: true as const };
 }
 
@@ -197,7 +202,8 @@ export async function updateWhisky(
     imageUrl: string | null;
   }>
 ) {
-  const existing = await fetchWhisky(id);
+  const { ref, snap } = await getOwnedWhisky(id);
+  const existing = serializeWhisky(id, snap.data());
   const status = payload.status ?? existing.status;
   let openedAt: Date | null =
     payload.openedAt !== undefined
@@ -210,7 +216,6 @@ export async function updateWhisky(
   if (status === "UNOPENED") openedAt = null;
   if (status === "OPENED" && !openedAt) openedAt = new Date();
 
-  const ref = doc(db, "whiskies", id);
   await updateDoc(ref, {
     name: payload.name ?? existing.name,
     distillery: payload.distillery ?? existing.distillery ?? "",
@@ -223,24 +228,24 @@ export async function updateWhisky(
     imageUrl: payload.imageUrl === undefined ? existing.imageUrl : payload.imageUrl,
   });
   const updated = await getDoc(ref);
-  return serializeWhisky(id, updated.data() ?? {}, existing.notes);
+  return serializeWhisky(id, updated.data() ?? {});
 }
 
 export async function recordPour(id: string, percent: number) {
-  const existing = await fetchWhisky(id);
+  const { ref, snap } = await getOwnedWhisky(id);
+  const existing = serializeWhisky(id, snap.data());
   if (existing.status !== "OPENED") {
     throw new Error("개봉한 병만 한 잔을 기록할 수 있습니다.");
   }
 
   const next = Math.max(0, Math.min(100, existing.remainingPercent - percent));
   const status = next === 0 ? "FINISHED" : "OPENED";
-  const ref = doc(db, "whiskies", id);
   await updateDoc(ref, {
     remainingPercent: Math.round(next),
     status,
   });
   const updated = await getDoc(ref);
-  return serializeWhisky(id, updated.data() ?? {}, existing.notes);
+  return serializeWhisky(id, updated.data() ?? {});
 }
 
 export async function createNote(
@@ -254,7 +259,7 @@ export async function createNote(
   }
 ) {
   const uid = requireUid();
-  await fetchWhisky(whiskyId);
+  await getOwnedWhisky(whiskyId);
   const ref = await addDoc(collection(db, "whiskies", whiskyId, "notes"), {
     userId: uid,
     whiskyId,

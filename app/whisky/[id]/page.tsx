@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Star, Trash2 } from "lucide-react";
@@ -10,8 +11,6 @@ import { AiringBadge } from "@/components/AiringBadge";
 import { BottleLevel } from "@/components/BottleLevel";
 import { FlavorTimeline } from "@/components/FlavorTimeline";
 import { PourActions } from "@/components/PourActions";
-import { WhiskyFormModal } from "@/components/WhiskyFormModal";
-import { NoteFormModal } from "@/components/NoteFormModal";
 import { calendarDaysBetween } from "@/lib/airing";
 import {
   createNote,
@@ -21,6 +20,22 @@ import {
   updateWhisky,
 } from "@/lib/api";
 import type { Whisky } from "@/lib/types";
+
+const WhiskyFormModal = dynamic(
+  () =>
+    import("@/components/WhiskyFormModal").then((mod) => ({
+      default: mod.WhiskyFormModal,
+    })),
+  { ssr: false }
+);
+
+const NoteFormModal = dynamic(
+  () =>
+    import("@/components/NoteFormModal").then((mod) => ({
+      default: mod.NoteFormModal,
+    })),
+  { ssr: false }
+);
 
 export default function WhiskyDetailPage() {
   return (
@@ -71,7 +86,9 @@ function WhiskyDetailContent() {
     setError(null);
     try {
       const updated = await recordPour(whisky.id, percent);
-      setWhisky(updated);
+      setWhisky((current) =>
+        current ? { ...updated, notes: current.notes } : updated
+      );
       setPourPrompt(updated.status === "OPENED");
     } catch (err) {
       setError(err instanceof Error ? err.message : "한 잔 기록에 실패했습니다.");
@@ -127,6 +144,8 @@ function WhiskyDetailContent() {
                     src={whisky.imageUrl}
                     alt={whisky.name}
                     referrerPolicy="no-referrer"
+                    fetchPriority="high"
+                    decoding="async"
                     className="max-h-80 w-full object-cover"
                   />
                 </div>
